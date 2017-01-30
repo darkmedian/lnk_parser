@@ -1,12 +1,12 @@
+import hashlib
+import io
 from flask import render_template, Blueprint, request, jsonify
+from werkzeug import secure_filename
 from uuid import uuid4
-import sys, struct, datetime, binascii
+import sys, datetime, binascii
 import os
-from werkzeug.utils import secure_filename
-
 
 # HASH of flag attributes
-
 flag_hash = [["",""] for _ in xrange(7)]
 flag_hash[0][1] = "HAS SHELLIDLIST"
 flag_hash[0][0] = "NO SHELLIDLIST"
@@ -80,6 +80,7 @@ def assert_lnk_signature(f):
         raise Exception("Cannot read this kind of .lnk file.")
 
 
+# read COUNT bytes at LOC and unpack into binary
 def read_unpack_bin(f, loc, count):
 
     # jump to the specified location
@@ -170,7 +171,6 @@ def parse_lnk(filename):
         return output
 
     output["filename"] = filename
-    # output = "Lnk File: " + filename + "\n"
 
     # get the flag bits
     flags = read_unpack_bin(f,20,1)
@@ -182,7 +182,6 @@ def parse_lnk(filename):
         # grab the description for this bit
         flag_desc.append(flag_hash[cnt][bit])
 
-    # output += "Link Flags: " + " | ".join(flag_desc) + "\n"
     output["flags"] = flag_desc
     # File Attributes 4bytes@18h = 24d
     # Only a non-zero if "Flag bit 1" above is set to 1
@@ -293,7 +292,6 @@ def parse_lnk(filename):
     elif vol_flags[:2] == "01":
 
         # TODO: test this section!
-        # output += "Target is on Network share\n"
         output["volume_target"] = "Target is on Network share"
         net_vol_off_hex = reverse_hex(read_unpack(f,net_vol_off,4))
         net_vol_off = struct_start + int(net_vol_off_hex, 16)
@@ -370,7 +368,7 @@ upload = Blueprint('upload', __name__, url_prefix='/upload')
 
 @upload.route('/put', methods=['POST'])
 def putt():
-    upload_path = 'tmp/'
+    upload_path = '/tmp/'
     req = request.get_json()
     base64_data = req['base64']
     destination_filename = uuid4().hex + '.lnk'

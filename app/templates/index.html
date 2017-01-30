@@ -2,13 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>React</title>
+    <title>Lnk Parser</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/material.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/style.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.2/lodash.min.js"></script>
 </head>
 <body>
     <div id="app"></div>
+      <!--<form action="upload/put" method="post" enctype="multipart/form-data">-->
+        <!--<input type="file" name="file"><br /><br />-->
+        <!--<input type="submit" value="Upload">-->
+      <!--</form>-->
     <script src="{{ url_for('static', filename='bundle.js') }}"></script>
 </body>
 </html>
