@@ -29933,8 +29933,12 @@
 	        _this2.state = {
 	            data_uri: null,
 	            processing: false,
-	            rows: []
+	            rows: [],
+	            inArea: false,
+	            areaStatus: ""
 	        };
+	        _this2.handleOpenDialog = _this2.handleOpenDialog.bind(_this2);
+	        _this2.handleCloseDialog = _this2.handleCloseDialog.bind(_this2);
 	        return _this2;
 	    }
 
@@ -29944,76 +29948,50 @@
 	            window._this = this;
 	        }
 	    }, {
-	        key: "handleSubmit",
-	        value: function handleSubmit(e) {
-	            e.preventDefault();
-	            var _this = this;
+	        key: "handleOpenDialog",
+	        value: function handleOpenDialog() {
 	            this.setState({
-	                processing: true
-	            });
-	            _jquery2.default.ajax({
-	                url: '/upload/put',
-	                data: {
-	                    data_uri: this.state.data_uri,
-	                    filename: this.state.filename,
-	                    filetype: this.state.filetype
-	                },
-	                dataType: 'json',
-	                cache: false,
-	                success: function (data) {
-	                    this.setState({ data: data });
-	                }.bind(this),
-	                error: function (xhr, status, err) {
-	                    console.error(this.props.url, status, err.toString());
-	                }.bind(this)
+	                openDialog: true
 	            });
 	        }
 	    }, {
-	        key: "uploadfile",
-	        value: function uploadfile(e) {
-	            var _this3 = this;
-
-	            var reader = new FileReader();
-	            var file = e.target.files[0];
-	            reader.onload = function (upload) {
-	                _this3.setState({
-	                    data_uri: upload.target.result,
-	                    filename: file.name,
-	                    filetype: file.type
-	                });
-	            };
-
-	            reader.readAsDataURL(file);
+	        key: "handleCloseDialog",
+	        value: function handleCloseDialog() {
+	            this.setState({
+	                openDialog: false
+	            });
 	        }
 	    }, {
-	        key: "convertToBase64",
-	        value: function convertToBase64(file) {
-	            var _this4 = this;
+	        key: "refresh",
+	        value: function refresh() {
+	            var LNK = _this.props.LNK;
 
-	            var reader = new FileReader();
-	            if (file) {
-	                reader.readAsDataURL(file);
-	            }
-	            return new Promise(function (resolve, reject) {
-	                reader.onload = function () {
-	                    resolve(file);
-	                };
-	                reader.onerror = function () {
-	                    return reject(_this4);
-	                };
-	            });
+	            LNK.LNKProps = [];
+	            _this.forceUpdate();
 	        }
 	    }, {
 	        key: "onDrop",
 	        value: function onDrop(acceptedFiles, rejectedFiles) {
-	            var data = new FormData();
-	            data.append('foo', 'bar');
-	            var reader = new FileReader();
-	            reader.onload = function () {
-	                var base64Data = reader.result;
-	                _this.props.dispatch((0, _uploadActions.uploadFile)({ 'base64': base64Data }));
-	            };
-	            reader.readAsDataURL(acceptedFiles[0]);
+	            if (acceptedFiles[0].size > 1000000) {
+	                _this.state.errorTitle = "File size too large";
+	                _this.state.errorContent = "Files larger than 1MB are not allowed at this moment";
+	                _this.handleOpenDialog();
+	                return;
+	            }
+	            if (acceptedFiles[0].type === "application/x-ms-shortcut" || acceptedFiles[0].type === "") {
+	                (function () {
+	                    var reader = new FileReader();
+	                    reader.onload = function () {
+	                        var base64Data = reader.result;
+	                        _this.props.dispatch((0, _uploadActions.uploadFile)({ 'base64': base64Data }));
+	                    };
+	                    reader.readAsDataURL(acceptedFiles[0]);
+	                })();
+	            } else {
+	                _this.state.errorTitle = "Invalid filetype";
+	                _this.state.errorContent = "Only LNK files are allowed at this moment";
+	                _this.handleOpenDialog();
+	            }
 	        }
 	    }, {
 	        key: "render",
@@ -30022,7 +30000,6 @@
 
 	            function LNKProperties() {
 	                if (LNK.LNKProps.length <= 0) {
-
 	                    return [];
 	                } else {
 	                    var props = [];
@@ -30079,16 +30056,70 @@
 	                                },
 	                                _react2.default.createElement(
 	                                    _reactMdl.TableHeader,
-	                                    { name: "prop", tooltip: "The amazing material name" },
+	                                    { name: "prop", tooltip: "Property" },
 	                                    "Prop"
 	                                ),
 	                                _react2.default.createElement(
 	                                    _reactMdl.TableHeader,
-	                                    { numeric: true, name: "value", tooltip: "Number of materials" },
+	                                    { name: "value", tooltip: "Value" },
 	                                    "Value"
 	                                )
 	                            )
 	                        )
+	                    ),
+	                    _react2.default.createElement(
+	                        _reactMdl.Footer,
+	                        { size: "mini" },
+	                        _react2.default.createElement(
+	                            _reactMdl.FooterSection,
+	                            { type: "left", logo: "Lnk Parser" },
+	                            _react2.default.createElement(
+	                                _reactMdl.FooterLinkList,
+	                                null,
+	                                _react2.default.createElement(
+	                                    "a",
+	                                    { href: "#" },
+	                                    "Help"
+	                                ),
+	                                _react2.default.createElement(
+	                                    "a",
+	                                    { href: "#" },
+	                                    "Privacy & Terms"
+	                                )
+	                            )
+	                        )
+	                    ),
+	                    _react2.default.createElement(
+	                        _reactMdl.Dialog,
+	                        { open: this.state.openDialog },
+	                        _react2.default.createElement(
+	                            _reactMdl.DialogTitle,
+	                            null,
+	                            this.state.errorTitle
+	                        ),
+	                        _react2.default.createElement(
+	                            _reactMdl.DialogContent,
+	                            null,
+	                            _react2.default.createElement(
+	                                "p",
+	                                null,
+	                                this.state.errorContent
+	                            )
+	                        ),
+	                        _react2.default.createElement(
+	                            _reactMdl.DialogActions,
+	                            null,
+	                            _react2.default.createElement(
+	                                _reactMdl.Button,
+	                                { type: "button", onClick: this.handleCloseDialog, raised: true, colored: true },
+	                                "OK"
+	                            )
+	                        )
+	                    ),
+	                    _react2.default.createElement(
+	                        _reactMdl.FABButton,
+	                        { colored: true, ripple: true, className: "refresh", onClick: this.refresh },
+	                        _react2.default.createElement(_reactMdl.Icon, { name: "refresh" })
 	                    )
 	                )
 	            );
@@ -51346,10 +51377,8 @@
 	    var config = {
 	        onUploadProgress: function onUploadProgress(progressEvent) {
 	            var percentCompleted = Math.round(progressEvent.loaded * 100 / progressEvent.total);
-	            console.log(percentCompleted);
 	        }
 	    };
-	    var request = _axios2.default.post('upload/put', data, config);
 	    return {
 	        type: "CREATE_LNK",
 	        payload: request
@@ -51377,27 +51406,15 @@
 	    userFetch: false,
 	    LNKFetch: false,
 	    LNKProps: [],
-	    users: [],
 	    error: null
 	};
 	function reducer() {
 	    var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
 	    var action = arguments[1];
 
-	    // if (action.type === "SAMPLE_PENDING") {
-	    //     console.log(action.type);
-	    //     state =  {...state, fetching: true, userFetch: false};
-	    // }
-	    // else if (action.type === "FETCH_SAMPLE_ERROR") {
-	    //     console.log(action.type);
-	    //     state =  {...state, fetching: false, error: action.payload};
-	    // } else if (action.type === "RECIEVE_SAMPLE"){
-	    //     state =  {...state, fetching: false, userFetch: true, users: action.payload}
-	    // }
-	    // return state;
 	    switch (action.type) {
 	        case "CREATE_LNK_FULFILLED":
-	            return _extends({}, state, { LNKProps: [].concat(_toConsumableArray(state.LNKProps), [action.payload.data.data]) });
+	            return _extends({}, state, { LNKFetch: true, fetching: false, LNKProps: [].concat(_toConsumableArray(state.LNKProps), [action.payload.data.data]) });
 	        default:
 	            return state;
 	    }

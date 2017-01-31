@@ -1,6 +1,8 @@
 import React from "react";
 import { Link } from "react-router"
-import { Layout, Navigation, Header, Drawer, Content } from "react-mdl";
+import { Layout, Navigation, Header, Content, Footer, FooterSection, FooterLinkList,
+         Dialog, DialogTitle, DialogContent, DialogActions, Button, FABButton,
+         Icon } from "react-mdl";
 import { DataTable, TableHeader } from "react-mdl"
 import { connect } from "react-redux";
 import { uploadFile } from "../actions/uploadActions"
@@ -22,81 +24,60 @@ export default class MainLayout extends React.Component{
         this.state = {
             data_uri: null,
             processing: false,
-            rows: []
+            rows: [],
+            inArea: false,
+            areaStatus: ""
         };
+        this.handleOpenDialog = this.handleOpenDialog.bind(this);
+        this.handleCloseDialog = this.handleCloseDialog.bind(this);
     }
 
     componentWillMount(){
         window._this = this;
     }
-    handleSubmit(e) {
-        e.preventDefault();
-        const _this = this;
-        this.setState({
-            processing: true
-        });
-        $.ajax({
-            url: '/upload/put',
-            data: {
-                data_uri: this.state.data_uri,
-                filename: this.state.filename,
-                filetype: this.state.filetype
-            },
-            dataType: 'json',
-            cache: false,
-            success: function(data) {
-                this.setState({data: data});
-            }.bind(this),
-            error: function(xhr, status, err) {
-                console.error(this.props.url, status, err.toString());
-            }.bind(this)
-        });
+
+    handleOpenDialog() {
+      this.setState({
+        openDialog: true
+      });
     }
 
-    uploadfile (e){
-        const reader = new FileReader();
-        const file = e.target.files[0];
-        reader.onload = (upload) => {
-            this.setState({
-                data_uri: upload.target.result,
-                filename: file.name,
-                filetype: file.type
-            });
-        };
-
-        reader.readAsDataURL(file);
-    }
-    convertToBase64 (file) {
-        const reader = new FileReader();
-        if(file){
-            reader.readAsDataURL(file);
-        }
-        return new Promise((resolve, reject) => {
-            reader.onload = () =>{
-                resolve(file);
-            };
-            reader.onerror = () => {
-              return reject(this);
-            };
-        });
+    handleCloseDialog() {
+      this.setState({
+        openDialog: false
+      });
     }
 
+    refresh() {
+        const { LNK } = _this.props;
+        LNK.LNKProps = [];
+        _this.forceUpdate();
+    }
 
     onDrop (acceptedFiles, rejectedFiles) {
-        var data = new FormData();
-        data.append('foo', 'bar');
-        const reader = new FileReader();
-        reader.onload = () =>{
-            const base64Data = reader.result;
-            _this.props.dispatch(uploadFile({'base64': base64Data}));
-        };
-        reader.readAsDataURL(acceptedFiles[0]);
+        if(acceptedFiles[0].size > 1000000) {
+            _this.state.errorTitle = "File size too large";
+            _this.state.errorContent = "Files larger than 1MB are not allowed at this moment";
+            _this.handleOpenDialog();
+            return;
+        }
+        if(acceptedFiles[0].type === "application/x-ms-shortcut" || acceptedFiles[0].type === "") {
+            const reader = new FileReader();
+            reader.onload = () =>{
+                const base64Data = reader.result;
+                _this.props.dispatch(uploadFile({'base64': base64Data}));
+            };
+            reader.readAsDataURL(acceptedFiles[0]);
+        } else {
+            _this.state.errorTitle = "Invalid filetype";
+            _this.state.errorContent = "Only LNK files are allowed at this moment";
+            _this.handleOpenDialog();
+        }
     }
     render(){
         const { LNK } = this.props;
         function LNKProperties(){
             if (LNK.LNKProps.length <= 0) {
-
                 return []
             } else {
                 var props = [];
@@ -122,18 +103,38 @@ export default class MainLayout extends React.Component{
                             </div>
                         </Dropzone>
                         <div className={displayProps}>
-                        <DataTable
-                            shadow={0}
-                            rows={LNKProperties()}
-                            className=""
+                            <DataTable
+                                shadow={0}
+                                rows={LNKProperties()}
+                                className=""
 
-                        >
-                            <TableHeader name="prop" tooltip="The amazing material name">Prop</TableHeader>
-                            <TableHeader numeric name="value" tooltip="Number of materials">Value</TableHeader>
-                        </DataTable>
+                            >
+                                <TableHeader name="prop" tooltip="Property">Prop</TableHeader>
+                                <TableHeader name="value" tooltip="Value">Value</TableHeader>
+                            </DataTable>
                         </div>
-                        {/*{this.props.children}*/}
+
                     </Content>
+                    <Footer size="mini">
+                        <FooterSection type="left" logo="Lnk Parser">
+                            <FooterLinkList>
+                                <a href="#">Help</a>
+                                <a href="#">Privacy & Terms</a>
+                            </FooterLinkList>
+                        </FooterSection>
+                    </Footer>
+                    <Dialog open={this.state.openDialog}>
+                      <DialogTitle>{this.state.errorTitle}</DialogTitle>
+                      <DialogContent>
+                        <p>{this.state.errorContent}</p>
+                      </DialogContent>
+                      <DialogActions>
+                        <Button type='button' onClick={this.handleCloseDialog} raised colored>OK</Button>
+                      </DialogActions>
+                    </Dialog>
+                    <FABButton colored ripple className="refresh" onClick={this.refresh}>
+                        <Icon name="refresh" />
+                    </FABButton>
                 </Layout>
             </div>
         )
