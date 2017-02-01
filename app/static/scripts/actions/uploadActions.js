@@ -6,7 +6,7 @@ export function uploadFile(data){
             var percentCompleted = Math.round( (progressEvent.loaded * 100) / progressEvent.total );
         }
     };
-    const request = axios.post('dev/upload/put', data, config);
+    const request = axios.post('/upload/put', data, config);
     return {
         type: "CREATE_LNK",
         payload: request
